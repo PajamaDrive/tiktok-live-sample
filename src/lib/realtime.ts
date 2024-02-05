@@ -1,6 +1,5 @@
 import ioClient from 'socket.io-client';
 
-const endpoint = 'http://localhost:3000';
-const socket = ioClient(endpoint);
+const socket = ioClient(process.env.ENDPOINT ?? '');
 
 export const io = socket;
