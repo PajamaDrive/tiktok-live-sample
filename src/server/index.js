@@ -9,6 +9,11 @@ const app = express();
 const server = createServer(app);
 let tiktokLiveConnection;
 const io = new Server(server);
+let probability;
+let minProbability;
+let maxProbability;
+let maxDiamond;
+let numOfChoices;
 
 io.on('connection', (socket) => {
 	const userName = `User ${Math.random() * 10000}`;
@@ -30,17 +35,21 @@ io.on('connection', (socket) => {
 							`[gift] ${data.uniqueId} (userID: ${data.userId}) sends ${data.giftId}, diamonds: ${data.diamondCount} x${data.repeatCount} type: ${data.giftType} end: ${data.repeatEnd}`
 						);
 						const totalDiamond = data.diamondCount * data.repeatCount;
-						const weightedJudgeResult = weightedJudge(totalDiamond, 500, 0.1, 0.9);
-						const judgeResult = judge(0.5);
-						const selectResult = select(4);
-						console.log(`[weightedJudge]: ${weightedJudgeResult}`);
-						console.log(`[judge]: ${judgeResult}`);
+						const weightedJudgeResult = weightedJudge(
+							totalDiamond,
+							maxDiamond,
+							minProbability,
+							maxProbability
+						);
+						const judgeResult = judge(probability);
+						const selectResult = select(numOfChoices);
+						console.log(`[weightedJudge]: ${weightedJudgeResult.result}`);
+						console.log(`[judge]: ${judgeResult.result}`);
 						console.log(`[select]: ${selectResult}`);
 						io.emit('recieveGift', {
-							userId: data.userId,
 							userName: data.nickname,
 							diamond: totalDiamond,
-							result: {
+							raffle: {
 								weightedJudge: weightedJudgeResult,
 								judge: judgeResult,
 								select: selectResult
@@ -51,7 +60,20 @@ io.on('connection', (socket) => {
 			})
 			.catch((err) => {
 				console.error('Failed to connect', err);
+				io.emit('connectTiktokLive', {
+					roomId: null,
+					isConnected: false
+				});
 			});
+	});
+
+	socket.on('updateParameters', (message) => {
+		probability = message.probability;
+		minProbability = message.minProbability;
+		maxProbability = message.maxProbability;
+		maxDiamond = message.maxDiamond;
+		numOfChoices = message.numOfChoices;
+		console.log(JSON.stringify(message));
 	});
 
 	socket.on('disconnectTiktokLive', () => {
@@ -69,18 +91,28 @@ server.listen(port);
 const judge = (rate) => {
 	const threshold = 1 - rate;
 	const randomNum = Math.random();
-	return randomNum >= threshold;
+	return {
+		probability: rate,
+		result: randomNum >= threshold
+	};
 };
 
 const weightedJudge = (num, limit, minRate, maxRate) => {
-	const ratio = normalizeSigmoid(5, num / limit);
-	const threshold = 1 - Math.min(Math.max(minRate, ratio), maxRate);
+	const ratio = normalizeSigmoid(num / limit, 5);
+	const probability = Math.min(Math.max(minRate, ratio), maxRate);
+	const threshold = 1 - probability;
 	const randomNum = Math.random();
-	return randomNum >= threshold;
+	return {
+		probability,
+		result: randomNum >= threshold
+	};
 };
 
-const select = (choiceCount) => Math.floor(Math.random() * choiceCount) + 1;
+const select = (choiceCount) => ({
+	numOfChoices: choiceCount,
+	selected: Math.floor(Math.random() * choiceCount) + 1
+});
 
-const sigmoid = (slope, x) => (x > 1 ? 1.0 : 1.0 / (1 + Math.exp(-slope * x)));
+const sigmoid = (x, slope) => Math.min(1.0, 1.0 / (1 + Math.exp(-slope * x)));
 
-const normalizeSigmoid = (slope, x) => (sigmoid(slope, x) - 0.5) / (1 - 0.5);
+const normalizeSigmoid = (x, slope) => (sigmoid(x, slope) - 0.5) / (1 - 0.5);
