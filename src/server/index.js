@@ -13,6 +13,7 @@ let probability;
 let minProbability;
 let maxProbability;
 let maxDiamond;
+let methodType;
 let numOfChoices;
 
 io.on('connection', (socket) => {
@@ -37,6 +38,7 @@ io.on('connection', (socket) => {
 						const totalDiamond = data.diamondCount * data.repeatCount;
 						const weightedJudgeResult = weightedJudge(
 							totalDiamond,
+							methodType,
 							maxDiamond,
 							minProbability,
 							maxProbability
@@ -49,6 +51,7 @@ io.on('connection', (socket) => {
 						io.emit('recieveGift', {
 							userName: data.nickname,
 							diamond: totalDiamond,
+							methodType,
 							raffle: {
 								weightedJudge: weightedJudgeResult,
 								judge: judgeResult,
@@ -72,6 +75,7 @@ io.on('connection', (socket) => {
 		minProbability = message.minProbability;
 		maxProbability = message.maxProbability;
 		maxDiamond = message.maxDiamond;
+		methodType = message.methodType;
 		numOfChoices = message.numOfChoices;
 		console.log(JSON.stringify(message));
 	});
@@ -97,8 +101,13 @@ const judge = (rate) => {
 	};
 };
 
-const weightedJudge = (num, limit, minRate, maxRate) => {
-	const ratio = normalizeSigmoid(num / limit, 5);
+const weightedJudge = (num, type, limit, minRate, maxRate) => {
+	const methodMap = {
+		0: linear,
+		1: quadratic,
+		2: normalizeSigmoid
+	};
+	const ratio = methodMap[type](num / limit, 5);
 	const probability = Math.min(Math.max(minRate, ratio), maxRate);
 	const threshold = 1 - probability;
 	const randomNum = Math.random();
@@ -110,9 +119,12 @@ const weightedJudge = (num, limit, minRate, maxRate) => {
 
 const select = (choiceCount) => ({
 	numOfChoices: choiceCount,
-	selected: Math.floor(Math.random() * choiceCount) + 1
+	selected: Math.floor(Math.random() * choiceCount)
 });
 
 const sigmoid = (x, slope) => Math.min(1.0, 1.0 / (1 + Math.exp(-slope * x)));
 
 const normalizeSigmoid = (x, slope) => (sigmoid(x, slope) - 0.5) / (1 - 0.5);
+
+const linear = (x) => Math.min(1.0, x);
+const quadratic = (x) => Math.min(1.0, Math.pow(x, 2.0));

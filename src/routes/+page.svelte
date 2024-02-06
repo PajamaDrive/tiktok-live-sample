@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { io } from '$lib/realtime';
 	import { onMount } from 'svelte';
+	import { RangeSlider } from '@skeletonlabs/skeleton';
+	import { InputChip } from '@skeletonlabs/skeleton';
 
-	interface JudgeResult {
-		probability: number;
-		result: boolean;
+	interface JudgeResult<T = number, K = boolean> {
+		probability: T;
+		result: K;
 	}
 
-	interface SelectResult {
+	interface SelectResult<T = number> {
 		numOfChoices: number;
-		selected: number;
+		selected: T;
 	}
 
-	interface Result {
+	type MethodType = '一次関数' | '二次関数' | 'シグモイド';
+
+	interface History {
 		userName: string;
 		diamond: number;
+		methodType: number;
 		raffle: {
 			weightedJudge: JudgeResult;
 			judge: JudgeResult;
@@ -22,13 +27,70 @@
 		};
 	}
 
+	interface ComputedHistory {
+		userName: string;
+		diamond: number;
+		methodType: MethodType;
+		raffle: {
+			weightedJudge: JudgeResult<string, string>;
+			judge: JudgeResult<string, string>;
+			select: SelectResult<string>;
+		};
+	}
+
+	const methodTypeMap = Object.freeze<{ [key: number]: MethodType }>({
+		0: '一次関数',
+		1: '二次関数',
+		2: 'シグモイド'
+	});
+
 	let userName = '';
 	let probability = 0.5;
 	let minProbability = 0.1;
 	let maxProbability = 0.9;
 	let maxDiamond = 200;
-	let numOfChoices = 5;
-	let histories: Result[] = [];
+	let methodType = 0;
+	let choices: string[] = ['hoge', 'fuga'];
+	$: numOfChoices = choices.length;
+	let histories: History[] = [];
+	let computedHistories: ComputedHistory[];
+	$: computedHistories = histories.map((history) => {
+		const raffle: ComputedHistory['raffle'] = {
+			weightedJudge: {
+				probability: `${history.raffle.weightedJudge.probability * 100}%`,
+				result: history.raffle.weightedJudge.result ? 'あたり' : 'はずれ'
+			},
+			judge: {
+				probability: `${history.raffle.judge.probability * 100}%`,
+				result: history.raffle.judge.result ? 'あたり' : 'はずれ'
+			},
+			select: {
+				numOfChoices: history.raffle.select.numOfChoices,
+				selected: choices[history.raffle.select.selected]
+			}
+		};
+		const methodType = methodTypeMap[history.methodType];
+		return { ...history, methodType, raffle };
+	});
+	const history: History = {
+		userName: 'hoge',
+		diamond: 100,
+		methodType: 0,
+		raffle: {
+			weightedJudge: {
+				result: true,
+				probability: 1
+			},
+			judge: {
+				result: false,
+				probability: 0
+			},
+			select: {
+				numOfChoices: 3,
+				selected: 1
+			}
+		}
+	};
 	let connected = false;
 	let roomId: string | null = null;
 
@@ -39,7 +101,7 @@
 			roomId = message.roomId;
 			connected = message.isConnected;
 		});
-		io.on('recieveGift', (message: Result) => {
+		io.on('recieveGift', (message: History) => {
 			histories = [...histories, message];
 		});
 		io.on('disconnectTiktokLive', (message) => {
@@ -59,6 +121,7 @@
 			minProbability,
 			maxProbability,
 			maxDiamond,
+			methodType,
 			numOfChoices
 		});
 	};
@@ -68,68 +131,118 @@
 	});
 </script>
 
-<div>
-	<label for="probability">当選確率(傾斜なし)</label>
-	<input id="probability" bind:value={probability} />
-</div>
-<div>
-	<label for="minProbability">最低当選確率(傾斜あり)</label>
-	<input id="minProbability" bind:value={minProbability} />
-</div>
-<div>
-	<label for="maxProbability">最高当選確率(傾斜あり)</label>
-	<input id="maxProbability" bind:value={maxProbability} />
-</div>
-<div>
-	<label for="maxDiamond">上限ダイアモンド数(傾斜あり)</label>
-	<input id="maxDiamond" bind:value={maxDiamond} />
-</div>
-<div>
-	<label for="numOfChoices">選択肢数</label>
-	<input id="numOfChoices" bind:value={numOfChoices} />
-</div>
-<div>
-	<button on:click={emitParameters}>パラメータ更新</button>
+<div class="grid grid-cols-2 grid-rows-3 gap-4">
+	<div class="card row-span-2 p-4 m-4">
+		<div class="card-header text-lg font-mono font-bold pb-12">傾斜あり</div>
+		<div class="grid grid-rows-3 gap-y-4">
+			<RangeSlider name="range-slider" bind:value={minProbability} min={0.05} max={1} step={0.05}>
+				<div class="flex justify-between items-center">
+					<div class="font-bold">最低当選確率</div>
+					<div class="text-xs">{minProbability} / 1.00</div>
+				</div>
+			</RangeSlider>
+			<RangeSlider name="range-slider" bind:value={maxProbability} min={0.05} max={1} step={0.05}>
+				<div class="flex justify-between items-center">
+					<div class="font-bold">最高当選確率</div>
+					<div class="text-xs">{maxProbability} / 1.00</div>
+				</div>
+			</RangeSlider>
+			<label class="label">
+				<span>上限ダイアモンド数</span>
+				<input class="input" type="text" bind:value={maxDiamond} />
+			</label>
+			<label class="label">
+				<span>確率決定関数</span>
+				<select class="select" bind:value={methodType}>
+					<option value={0}>シグモイド</option>
+					<option value={1}>一次関数</option>
+					<option value={2}>二次関数</option>
+				</select>
+			</label>
+		</div>
+	</div>
+	<div class="card p-4 m-4">
+		<div class="card-header text-lg font-mono font-bold pb-12">傾斜なし</div>
+		<RangeSlider name="range-slider" bind:value={probability} min={0.05} max={1} step={0.05}>
+			<div class="flex justify-between items-center">
+				<div class="font-bold">当選確率</div>
+				<div class="text-xs">{probability} / 1.00</div>
+			</div>
+		</RangeSlider>
+	</div>
+	<div class="card p-4 m-4">
+		<div class="card-header text-lg font-mono font-bold pb-12">選択肢</div>
+		<InputChip
+			bind:value={choices}
+			name="choices"
+			placeholder="選択肢の値を入力してください"
+			max={10}
+		/>
+	</div>
+	<div class="card col-span-2 p-4 m-4">
+		<div class="grid grid-rows-2 grid-cols-6 gap-y-8">
+			<div class="col-span-2">
+				<p>ユーザ名</p>
+				<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
+					<div class="input-group-shim">@</div>
+					<input type="text" placeholder="userName" bind:value={userName} />
+				</div>
+			</div>
+			<div class="grid col-span-1 pt-4 px-6">
+				{#if connected}
+					<button type="button" class="btn variant-filled" on:click={disconnect}>接続解除</button>
+				{:else}
+					<button type="button" class="btn variant-filled" on:click={connect}>接続</button>
+				{/if}
+			</div>
+			<div class="grid col-span-1 col-end-7 pt-4 px-6">
+				<button type="button" class="btn variant-filled" on:click={emitParameters}
+					>パラメータ更新</button
+				>
+			</div>
+			{#if roomId}
+				<p class="grod col-span-6 font-mono">
+					Room ID: <span class="font-bold">{roomId}</span> のライブ配信に接続しています。
+				</p>
+			{/if}
+		</div>
+	</div>
 </div>
 
-<label for="userName">ユーザ名</label>
-<input id="userName" bind:value={userName} />
-{#if connected}
-	<button on:click={disconnect}>接続解除</button>
-{:else}
-	<button on:click={connect}>接続</button>
-{/if}
-{#if roomId}
-	<p>Room ID: {roomId} のライブ配信に接続しています。</p>
-{/if}
+<div></div>
+
 {#if histories.length}
-	<table>
-		<caption> ユーザごとの当落結果など </caption>
-		<thead>
-			<tr>
-				<th scope="col">ユーザ名</th>
-				<th scope="col">ダイアモンド数</th>
-				<th scope="col">傾斜なし当選確率</th>
-				<th scope="col">傾斜なし当選結果</th>
-				<th scope="col">傾斜あり当選確率</th>
-				<th scope="col">傾斜あり当選結果</th>
-				<th scope="col">選択肢数</th>
-				<th scope="col">選ばれた選択肢</th>
-			</tr>
-		</thead>
-		<tbody>
-			{#each histories as history}
-				<tr>
-					<th scope="row">{history.userName}</th>
-					<td>{history.diamond}</td>
-					<td>{history.raffle.judge.probability}</td>
-					<td>{history.raffle.judge.result ? 'あたり' : 'はずれ'}</td>
-					<td>{history.raffle.weightedJudge.probability}</td>
-					<td>{history.raffle.weightedJudge.result ? 'あたり' : 'はずれ'}</td>
-					<td>{history.raffle.select.numOfChoices}</td>
-					<td>{history.raffle.select.selected}</td>
+	<div class="table-container">
+		<table class="table table-comfortable table-hover">
+			<caption> ユーザごとの当落結果など </caption>
+			<thead>
+				<tr class="table-row-checked">
+					<th scope="col">ユーザ名</th>
+					<th scope="col">ダイアモンド数</th>
+					<th scope="col">傾斜なし当選確率</th>
+					<th scope="col">傾斜なし当選結果</th>
+					<th scope="col">傾斜あり確率関数</th>
+					<th scope="col">傾斜あり当選確率</th>
+					<th scope="col">傾斜あり当選結果</th>
+					<th scope="col">選択肢数</th>
+					<th scope="col">選ばれた選択肢</th>
 				</tr>
-			{/each}
-		</tbody>
-	</table>
+			</thead>
+			<tbody>
+				{#each computedHistories as history}
+					<tr>
+						<th scope="row">{history.userName}</th>
+						<td>{history.diamond}</td>
+						<td>{history.raffle.judge.probability}</td>
+						<td>{history.raffle.judge.result}</td>
+						<td>{history.methodType}</td>
+						<td>{history.raffle.weightedJudge.probability}</td>
+						<td>{history.raffle.weightedJudge.result}</td>
+						<td>{history.raffle.select.numOfChoices}</td>
+						<td>{history.raffle.select.selected}</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
 {/if}
