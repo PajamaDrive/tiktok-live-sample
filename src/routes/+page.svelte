@@ -3,23 +3,9 @@
 	import { onMount } from 'svelte';
 	import { InputChip } from '@skeletonlabs/skeleton';
 	import LiveConnectInput from '$lib/LiveConnectInput.svelte';
-	import { ConicGradient } from '@skeletonlabs/skeleton';
-	import type { ConicStop, Transition } from '@skeletonlabs/skeleton';
-	import Triangle from 'svelte-material-icons/Triangle.svelte';
-	import { quintInOut } from 'svelte/easing';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
-	import { COLORS, COLOR_NAMES, OPACITIES } from '$lib/color';
-
-	interface PickResult {
-		choices: string[];
-		result: string;
-	}
-
-	interface History {
-		userName: string;
-		diamond: number;
-		pick: PickResult;
-	}
+	import Roulette from '$lib/Roulette.svelte';
+	import type { History } from '../types/roulette';
 
 	let choices: string[] = ['hoge', 'fuga'];
 	const history = {
@@ -31,55 +17,8 @@
 		}
 	};
 	let histories: History[] = [history];
-	let conicStops: ConicStop[];
-	$: conicStops = choices.map((choice, index) => {
-		const colorIndex = index % COLOR_NAMES.length;
-		const opacityIndex = Math.floor(index / COLOR_NAMES.length);
-		const color = `${COLORS[colorIndex]}${OPACITIES[opacityIndex]}`;
-		const start = Math.floor((index / choices.length) * 100);
-		const end = Math.floor(((index + 1) / choices.length) * 100);
-		return {
-			label: choice,
-			color,
-			start,
-			end
-		};
-	});
 
-	let isDrawing = false;
 	let isAuto = false;
-	$: disabled = isAuto || isDrawing || histories.length === 0;
-	const drawRaffle = () => {
-		isDrawing = true;
-	};
-	$: if (isAuto && !isDrawing && histories.length > 0) {
-		setTimeout(() => {
-			drawRaffle();
-		}, 1000);
-	}
-
-	const onClick = () => {
-		if (!disabled) {
-			drawRaffle();
-		}
-	};
-
-	const onDrawFinished = () => {
-		if (!isDrawing) {
-			return;
-		}
-		isDrawing = false;
-		histories = histories.slice(1, histories.length);
-	};
-
-	const spin: Transition = (_node, _param) => {
-		if (!isDrawing) return {};
-		return {
-			duration: 7000,
-			easing: quintInOut,
-			css: (t) => `transform: rotate(${t * 21600}deg);`
-		};
-	};
 
 	const emitParameters = () => {
 		io.emit('updateParameters', {
@@ -121,14 +60,7 @@
 <button type="button" class="variant-filled btn" on:click={addHistory}>追加</button>
 <SlideToggle name="slide" bind:checked={isAuto}>{isAuto ? '自動抽選' : '手動抽選'}</SlideToggle>
 
-{#key isDrawing}
-	<div class="grid justify-center">
-		<Triangle color="red" size="30px" class="rotate-180 place-self-center self-end" />
-		<button type="button" in:spin on:introend={onDrawFinished} on:click={onClick}>
-			<ConicGradient stops={conicStops} width="w-96" />
-		</button>
-	</div>
-{/key}
+<Roulette {choices} {histories} {isAuto} />
 
 {#if histories.length}
 	<div class="table-container">
