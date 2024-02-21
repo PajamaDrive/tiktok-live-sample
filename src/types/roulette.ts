@@ -15,3 +15,9 @@ export interface ChoiceInfo {
 	start: number;
 	end: number;
 }
+
+export interface RaffleResult {
+	title: string;
+	count: number;
+	color: string;
+}
