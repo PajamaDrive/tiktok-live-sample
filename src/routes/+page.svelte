@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { io } from '$lib/realtime';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import { InputChip } from '@skeletonlabs/skeleton';
-	import LiveConnectInput from '$lib/LiveConnectInput.svelte';
-	import { SlideToggle } from '@skeletonlabs/skeleton';
 	import Roulette from '$lib/Roulette.svelte';
 	import type { History } from '../types/roulette';
+	import type { Writable } from 'svelte/store';
+	import type { UserInputContext } from '../types/context';
 
 	let choices: string[] = ['hoge', 'fuga'];
 	const history = {
@@ -18,7 +18,8 @@
 	};
 	let histories: History[] = [history];
 
-	let isAuto = false;
+	// Drawで変更した値を受け取る（中身はwritable store）
+	const userSettings = getContext<Writable<UserInputContext>>('userSettings');
 
 	const emitParameters = () => {
 		io.emit('updateParameters', {
@@ -49,18 +50,14 @@
 	});
 </script>
 
-<div class="grid grid-cols-2 gap-4">
-	<div class="card m-4 p-4">
-		<div class="card-header pb-12 font-mono text-lg font-bold">選択肢</div>
-		<InputChip bind:value={choices} name="choices" placeholder="選択肢の値を入力してください" />
-	</div>
-	<LiveConnectInput />
+<div class="card m-4 w-full p-4">
+	<div class="card-header pb-12 font-mono text-lg font-bold">選択肢</div>
+	<InputChip bind:value={choices} name="choices" placeholder="選択肢の値を入力してください" />
 </div>
 
 <button type="button" class="variant-filled btn" on:click={addHistory}>追加</button>
-<SlideToggle name="slide" bind:checked={isAuto}>{isAuto ? '自動抽選' : '手動抽選'}</SlideToggle>
 
-<Roulette {choices} {histories} {isAuto} />
+<Roulette {choices} {histories} isAuto={$userSettings.isAuto} />
 
 {#if histories.length}
 	<div class="table-container">
