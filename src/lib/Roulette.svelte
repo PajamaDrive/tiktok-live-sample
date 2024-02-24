@@ -3,10 +3,20 @@
 	import { quintInOut } from 'svelte/easing';
 	import { COLORS, COLOR_NAMES, OPACITIES } from '$lib/color';
 	import type { ChoiceInfo, History, RaffleResult } from '../types/roulette';
+	import { getContext } from 'svelte';
+	import type { Writable } from 'svelte/store';
+	import type { UserInputContext } from '../types/context';
 
 	export let choices: string[];
 	export let histories: History[];
-	export let isAuto = false;
+	let isAuto: boolean;
+	let isGiftLinked: boolean;
+	// Drawで変更した値を受け取る（中身はwritable store）
+	const userSettings = getContext<Writable<UserInputContext>>('userSettings');
+	$: {
+		isAuto = $userSettings.isAuto;
+		isGiftLinked = $userSettings.isGiftLinked;
+	}
 
 	const VIEW_BOX_SIDE_LENGTH = 400;
 	const CIRCLE_CENTER = VIEW_BOX_SIDE_LENGTH / 2.0;
@@ -33,9 +43,9 @@
 	let result = 0;
 	$: result = (result + randomNum) % 1;
 	// 手動抽選を禁止する条件
-	$: disabled = isAuto || isDrawing || histories.length === 0;
+	$: disabled = isAuto || isDrawing || (isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
-	$: if (isAuto && !isDrawing && histories.length > 0) {
+	$: if (isAuto && !isDrawing && isGiftLinked && histories.length > 0) {
 		setTimeout(() => {
 			drawRaffle();
 		}, 1000);
@@ -76,7 +86,9 @@
 		if (selectedChoice) {
 			raffleResults = getUpdatedRaffleResults(raffleResults, selectedChoice);
 		}
-		histories = histories.slice(1, histories.length);
+		if (isGiftLinked) {
+			histories = histories.slice(1, histories.length);
+		}
 	};
 
 	/**

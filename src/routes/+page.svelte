@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { io } from '$lib/realtime';
-	import { getContext, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { InputChip } from '@skeletonlabs/skeleton';
 	import Roulette from '$lib/Roulette.svelte';
 	import type { History } from '../types/roulette';
-	import type { Writable } from 'svelte/store';
-	import type { UserInputContext } from '../types/context';
 
 	let choices: string[] = ['hoge', 'fuga'];
 	const history = {
@@ -17,9 +15,6 @@
 		}
 	};
 	let histories: History[] = [history];
-
-	// Drawで変更した値を受け取る（中身はwritable store）
-	const userSettings = getContext<Writable<UserInputContext>>('userSettings');
 
 	const emitParameters = () => {
 		io.emit('updateParameters', {
@@ -57,7 +52,7 @@
 
 <button type="button" class="variant-filled btn" on:click={addHistory}>追加</button>
 
-<Roulette {choices} {histories} isAuto={$userSettings.isAuto} />
+<Roulette {choices} {histories} />
 
 {#if histories.length}
 	<div class="table-container">
