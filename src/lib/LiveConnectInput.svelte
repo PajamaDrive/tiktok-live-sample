@@ -8,6 +8,9 @@
 	let userName = '';
 	let connected = false;
 	let roomId: string | null = null;
+	$: if (!isGiftLinked) {
+		isAuto = false;
+	}
 
 	/**
 	 * TikTok Liveに接続する
@@ -43,7 +46,7 @@
 
 <div class="grid grid-cols-1 gap-4">
 	<div class="bg-initial card col-span-2 m-4 p-4">
-		<header class="card-header text-xl font-bold">TikTok Live</header>
+		<header class="card-header text-xl font-bold">TikTok Live 連携</header>
 		<section class="p-4">
 			<div class="grid grid-rows-5 gap-y-2">
 				<!-- ユーザ名の入力フォーム -->
@@ -73,21 +76,7 @@
 						</div>
 					</div>
 				</div>
-				<!-- 自動抽選を行うか決定するスイッチ -->
-				<div class="grid grid-cols-4">
-					<div>自動抽選</div>
-					<div class="col-span-3">
-						<SlideToggle
-							background="variant-ghost-error"
-							active="variant-ghost-success"
-							name="slide"
-							bind:checked={isAuto}
-						>
-							{isAuto ? 'ON' : 'OFF'}
-						</SlideToggle>
-					</div>
-				</div>
-				<!-- 自動抽選を行うか決定するスイッチ -->
+				<!-- ギフト連動を行うか決定するスイッチ -->
 				<div class="grid grid-cols-4">
 					<div>ギフト連動</div>
 					<div class="col-span-2">
@@ -98,6 +87,21 @@
 							bind:checked={isGiftLinked}
 						>
 							{isGiftLinked ? 'ON' : 'OFF'}
+						</SlideToggle>
+					</div>
+				</div>
+				<!-- 自動抽選を行うか決定するスイッチ -->
+				<div class="grid grid-cols-4">
+					<div>自動抽選</div>
+					<div class="col-span-3">
+						<SlideToggle
+							background="variant-ghost-error"
+							active="variant-ghost-success"
+							name="slide"
+							disabled={!isGiftLinked}
+							bind:checked={isAuto}
+						>
+							{isAuto ? 'ON' : 'OFF'}
 						</SlideToggle>
 					</div>
 				</div>

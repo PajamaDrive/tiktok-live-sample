@@ -7,6 +7,7 @@ export interface History {
 	userName: string;
 	diamond: number;
 	pick: PickResult;
+	sendedAt: string;
 }
 
 export interface ChoiceInfo {

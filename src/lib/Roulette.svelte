@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Transition } from '@skeletonlabs/skeleton';
 	import { quintInOut } from 'svelte/easing';
-	import { COLORS, COLOR_NAMES, OPACITIES } from '$lib/color';
+	import { COLORS, COLOR_ENUM, COLOR_NAMES, OPACITIES } from '$lib/color';
 	import type { ChoiceInfo, History, RaffleResult } from '../types/roulette';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
@@ -38,14 +38,21 @@
 	});
 	let isDrawing = false;
 	let randomNum = 0;
+	let raffleResult: ChoiceInfo | undefined;
 	let raffleResults: RaffleResult[] = [];
 	let degree = 0;
 	let result = 0;
 	$: result = (result + randomNum) % 1;
+	// 選択肢が変わった場合に発火させたいので常に真となる条件を指定
+	$: if (choices) {
+		degree = 0;
+		result = 0;
+	}
 	// 手動抽選を禁止する条件
-	$: disabled = isAuto || isDrawing || (isGiftLinked && histories.length === 0);
+	$: disabled =
+		choices.length < 2 || isAuto || isDrawing || (isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
-	$: if (isAuto && !isDrawing && isGiftLinked && histories.length > 0) {
+	$: if (choices.length > 1 && isAuto && !isDrawing && isGiftLinked && histories.length > 0) {
 		setTimeout(() => {
 			drawRaffle();
 		}, 1000);
@@ -80,11 +87,11 @@
 		// 頂点に当選部分が来るようにするので反時計回りに回転
 		degree -= randomNum * 360;
 		// 当選部分の値を取得
-		const selectedChoice = choiceInfoList.find(
+		raffleResult = choiceInfoList.find(
 			(choiceInfo) => result >= choiceInfo.start && result <= choiceInfo.end
 		);
-		if (selectedChoice) {
-			raffleResults = getUpdatedRaffleResults(raffleResults, selectedChoice);
+		if (raffleResult) {
+			raffleResults = getUpdatedRaffleResults(raffleResults, raffleResult);
 		}
 		if (isGiftLinked) {
 			histories = histories.slice(1, histories.length);
@@ -100,7 +107,7 @@
 		return {
 			duration: 7000,
 			easing: quintInOut,
-			css: (t) => `transform: rotate(${t * (21600 - randomNum * 360)}deg);`
+			css: (t) => `transform: rotate(${t * (10800 - randomNum * 360)}deg);`
 		};
 	};
 
@@ -165,10 +172,25 @@
 	};
 </script>
 
-<div class=" flex flex-row justify-center space-x-4">
+<div class=" flex flex-row justify-center space-x-6">
 	<!-- ルーレット -->
 	{#key isDrawing}
 		<div class="flex flex-col items-center justify-center" style="--degree: {degree}deg">
+			<div class="flex flex-row">
+				{#if !isDrawing && raffleResult}
+					<div class="text-3xl">抽選結果:</div>
+					<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+						<circle cx="20" cy="20" r="10" fill={raffleResult.color} />
+					</svg>
+					<span class="text-3xl font-bold">{raffleResult.title}</span>
+				{:else if isDrawing}
+					<div class="text-3xl">抽選中…</div>
+				{:else if isGiftLinked && !histories.length}
+					<div class="text-2xl">ギフトが投げられると抽選が可能になります</div>
+				{:else}
+					<div class="text-2xl">ルーレットをクリックしてください</div>
+				{/if}
+			</div>
 			<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
 				<polyline points="15, 30 45, 30 30, 60" fill="#E53935" />
 			</svg>
@@ -190,16 +212,6 @@
 								stroke-width="2"
 							/>
 						{/each}
-					{:else if choiceInfoList.length === 1}
-						<!-- 選択肢が1つの場合は扇型をうまく描画できないので円を描画 -->
-						<circle
-							cx={CIRCLE_CENTER}
-							cy={CIRCLE_CENTER}
-							r={RADIUS}
-							fill={choiceInfoList[0].color}
-							stroke="#FAFAFA"
-							stroke-width="2"
-						/>
 					{:else}
 						<!-- 選択肢がない場合はダミーの円を描画 -->
 						<circle
@@ -210,6 +222,14 @@
 							stroke="#FAFAFA"
 							stroke-width="2"
 						/>
+						<text
+							x={CIRCLE_CENTER - 150}
+							y={CIRCLE_CENTER + 5}
+							font-size={20}
+							fill={COLORS[COLOR_ENUM.RED]}
+						>
+							選択肢を2つ以上入力してください
+						</text>
 					{/if}
 				</svg>
 			</button>
@@ -217,6 +237,9 @@
 	{/key}
 	<!-- 凡例 -->
 	<div class="flex flex-col">
+		<div class="mb-2 flex-none">
+			<span class="border-b-2 border-indigo-500 text-lg font-bold">抽選確率</span>
+		</div>
 		{#each choiceInfoList as choiceInfo}
 			<div class="flex flex-row">
 				<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
@@ -229,6 +252,9 @@
 	</div>
 	<!-- 抽選結果 -->
 	<div class="flex flex-col">
+		<div class="mb-2 flex-none">
+			<span class="border-b-2 border-indigo-500 text-lg font-bold">抽選履歴</span>
+		</div>
 		{#each raffleResults as raffleResult}
 			<div class="flex flex-row">
 				<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">

@@ -13,12 +13,11 @@ export const COLOR_NAMES = [
 	'AMBER',
 	'INDIGO',
 	'BROWN',
-	'WHITE',
 	'BLACK'
 ] as const;
 type COLOR = (typeof COLOR_NAMES)[number];
 
-const COLOR_ENUM = Object.freeze<{ [key in COLOR]: number }>({
+export const COLOR_ENUM = Object.freeze<{ [key in COLOR]: number }>({
 	RED: 0,
 	GREEN: 1,
 	BLUE: 2,
@@ -33,8 +32,7 @@ const COLOR_ENUM = Object.freeze<{ [key in COLOR]: number }>({
 	AMBER: 11,
 	INDIGO: 12,
 	BROWN: 13,
-	WHITE: 14,
-	BLACK: 15
+	BLACK: 14
 });
 
 export const COLORS = Object.freeze<{ [key in (typeof COLOR_ENUM)[COLOR]]: string }>({
@@ -52,7 +50,6 @@ export const COLORS = Object.freeze<{ [key in (typeof COLOR_ENUM)[COLOR]]: strin
 	[COLOR_ENUM.AMBER]: '#FFC107',
 	[COLOR_ENUM.INDIGO]: '#3F51B5',
 	[COLOR_ENUM.BROWN]: '#795548',
-	[COLOR_ENUM.WHITE]: '#F5F5F5',
 	[COLOR_ENUM.BLACK]: '#212121'
 });
 
