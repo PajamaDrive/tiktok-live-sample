@@ -132,12 +132,14 @@
 		// svgの座標系は画面左上が原点なのでy軸が反転している
 		// x軸は0から始まるのでπ/2だけ進める
 		// y軸は最小値から始まるのでπ/2だけ遅らせる
+		// 半円を超える場合は大円弧フラグを1にする
 		const startX = CIRCLE_CENTER + radius * Math.cos(-startRadian + 0.5 * Math.PI);
 		const startY = CIRCLE_CENTER + radius * Math.sin(-startRadian - 0.5 * Math.PI);
 		const endX = CIRCLE_CENTER + radius * Math.cos(-endRadian + 0.5 * Math.PI);
 		const endY = CIRCLE_CENTER + radius * Math.sin(-endRadian - 0.5 * Math.PI);
+		const largeArcFlag = Number(Math.abs(endRadian - startRadian) > Math.PI);
 
-		return `M${CIRCLE_CENTER},${CIRCLE_CENTER} L${startX},${startY} A${radius},${radius} 0 0 1 ${endX - 0.001},${endY - 0.01} Z`;
+		return `M${CIRCLE_CENTER},${CIRCLE_CENTER} L${startX},${startY} A${radius},${radius} 0 ${largeArcFlag} 1 ${endX},${endY} Z`;
 	};
 
 	/**
