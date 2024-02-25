@@ -1,4 +1,10 @@
 <script lang="ts">
+	// TODO: 色のマッピングを削除されても崩さないようにする
+	// TODO: 色を更新するようにする
+	// TODO: 選択肢の表示を変更する
+	// TODO: 抽選中は選択肢をいじれないようにする
+	// TODO: 抽選できる回数をどこかに表示しておく
+	// TODO: 抽選履歴の表示は一旦消しておく
 	import { io } from '$lib/realtime';
 	import { SlideToggle } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
