@@ -6,9 +6,11 @@
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
 	import type { UserInputContext } from '../types/context';
+	import Close from 'svelte-material-icons/Close.svelte';
 
 	export let choices: string[];
 	export let histories: History[];
+	let choice: string;
 	let isAuto: boolean;
 	let isGiftLinked: boolean;
 	// Drawで変更した値を受け取る（中身はwritable store）
@@ -170,6 +172,31 @@
 		// 初当選の選択肢だった場合、結果に追加する
 		return [...raffleResults, { title: choice.title, count: 1, color: choice.color }];
 	};
+
+	/**
+	 * エンターキーが押されたときに処理を行う
+	 */
+	const onPressedEnter = (event: KeyboardEvent) => {
+		// 日本語入力の時は入力終了後のみ反応させる
+		if (
+			!event.isComposing &&
+			event.key !== 'Process' &&
+			event.keyCode !== 229 &&
+			event.key === 'Enter'
+		) {
+			choices = [...choices, choice];
+			choice = '';
+		}
+	};
+
+	/**
+	 * 選択された選択肢を削除する
+	 * @param index インデックス
+	 * @return 選択された選択肢を削除する関数
+	 */
+	const removeChoice = (index: number) => () => {
+		choices = choices.filter((_, _index) => _index !== index);
+	};
 </script>
 
 <div class=" flex flex-row justify-center space-x-6">
@@ -182,7 +209,7 @@
 					<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
 						<circle cx="20" cy="20" r="10" fill={raffleResult.color} />
 					</svg>
-					<span class="text-3xl font-bold">{raffleResult.title}</span>
+					<span class="flex items-center text-3xl font-bold">{raffleResult.title}</span>
 				{:else if isDrawing}
 					<div class="text-3xl">抽選中…</div>
 				{:else if isGiftLinked && !histories.length}
@@ -235,6 +262,40 @@
 			</button>
 		</div>
 	{/key}
+	<!-- 選択肢入力 -->
+	<div class="flex flex-col">
+		<div class="mb-2 flex-none">
+			<span class="border-b-2 border-indigo-500 text-lg font-bold">選択肢入力</span>
+		</div>
+		<div class="mb-2">
+			<input
+				class="input"
+				disabled={isDrawing}
+				type="text"
+				bind:value={choice}
+				on:keydown={onPressedEnter}
+			/>
+		</div>
+		{#each choiceInfoList as choiceInfo, index}
+			<div>
+				<div
+					class="variant-soft badge m-1 text-base {isDrawing
+						? 'opacity-50'
+						: 'hover:variant-filled'}"
+				>
+					<div class="flex flex-row">
+						<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+							<circle cx="15" cy="15" r="7" fill={choiceInfo.color} />
+						</svg>
+						<div class="flex items-center">{choiceInfo.title}</div>
+						<button class="ml-2" disabled={isDrawing} type="button" on:click={removeChoice(index)}>
+							<Close size={23} />
+						</button>
+					</div>
+				</div>
+			</div>
+		{/each}
+	</div>
 	<!-- 凡例 -->
 	<div class="flex flex-col">
 		<div class="mb-2 flex-none">
@@ -245,8 +306,10 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
 					<circle cx="15" cy="15" r="7" fill={choiceInfo.color} />
 				</svg>
-				<div class="grow">{choiceInfo.title}</div>
-				<div class="ml-4">{getRoundedPercentage(choiceInfo.end - choiceInfo.start, 3)}%</div>
+				<div class="flex grow items-center">{choiceInfo.title}</div>
+				<div class="ml-4 flex items-center">
+					{getRoundedPercentage(choiceInfo.end - choiceInfo.start, 3)}%
+				</div>
 			</div>
 		{/each}
 	</div>
@@ -260,8 +323,8 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
 					<circle cx="15" cy="15" r="7" fill={raffleResult.color} />
 				</svg>
-				<div class="grow">{raffleResult.title}</div>
-				<div class="ml-4">{raffleResult.count}回</div>
+				<div class="flex grow items-center">{raffleResult.title}</div>
+				<div class="ml-4 flex items-center">{raffleResult.count}回</div>
 			</div>
 		{/each}
 	</div>

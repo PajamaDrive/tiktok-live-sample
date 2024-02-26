@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { io } from '$lib/realtime';
 	import { getContext, onMount } from 'svelte';
-	import { InputChip } from '@skeletonlabs/skeleton';
 	import Roulette from '$lib/Roulette.svelte';
 	import type { History } from '../types/roulette';
 	import type { Writable } from 'svelte/store';
@@ -51,13 +50,8 @@
 	});
 </script>
 
-<div class="card m-4 w-full p-4">
-	<div class="card-header pb-12 font-mono text-lg font-bold">選択肢</div>
-	<InputChip bind:value={choices} name="choices" placeholder="選択肢の値を入力してください" />
-</div>
-
 <!-- ルーレット -->
-<Roulette {choices} bind:histories />
+<Roulette class="m-2" {choices} bind:histories />
 
 <!-- 抽選結果 -->
 {#if isGiftLinked}
