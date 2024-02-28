@@ -203,6 +203,11 @@
 	<!-- ルーレット -->
 	{#key isDrawing}
 		<div class="flex flex-col items-center justify-center" style="--degree: {degree}deg">
+			{#if isGiftLinked}
+				<div class="my-1" class:text-red-500={!histories.length}>
+					残り抽選回数: {histories.length}回
+				</div>
+			{/if}
 			<div class="flex flex-row">
 				{#if !isDrawing && raffleResult}
 					<div class="text-3xl">抽選結果:</div>
@@ -213,7 +218,7 @@
 				{:else if isDrawing}
 					<div class="text-3xl">抽選中…</div>
 				{:else if isGiftLinked && !histories.length}
-					<div class="text-2xl">ギフトが投げられると抽選が可能になります</div>
+					<div class="text-2xl">ギフトが投げられるまでお待ちください</div>
 				{:else}
 					<div class="text-2xl">ルーレットをクリックしてください</div>
 				{/if}

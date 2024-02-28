@@ -51,7 +51,7 @@
 </script>
 
 <!-- ルーレット -->
-<Roulette class="m-2" {choices} bind:histories />
+<Roulette {choices} bind:histories />
 
 <!-- 抽選結果 -->
 {#if isGiftLinked}
