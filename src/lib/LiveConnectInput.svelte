@@ -49,7 +49,7 @@
 </script>
 
 <div class="grid grid-cols-1 gap-4">
-	<div class="bg-initial card col-span-2 m-4 p-4">
+	<div class="card col-span-2 m-4 p-4">
 		<header class="card-header text-xl font-bold">TikTok Live 連携</header>
 		<section class="p-4">
 			<div class="grid grid-rows-5 gap-y-2">

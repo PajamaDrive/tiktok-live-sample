@@ -30,8 +30,8 @@
 	 */
 	const openDrawer = () => {
 		const drawerSetting: DrawerSettings = {
-			bgDrawer: 'bg-indigo-800',
-			bgBackdrop: 'bg-indigo-800/30',
+			bgDrawer: 'bg-indigo-900',
+			bgBackdrop: 'bg-indigo-900/30',
 			width: 'w-[280px] md:w-[480px]',
 			padding: 'p-2',
 			rounded: 'rounded-xl'
