@@ -52,5 +52,3 @@ export const COLORS = Object.freeze<{ [key in (typeof COLOR_ENUM)[COLOR]]: strin
 	[COLOR_ENUM.BROWN]: '#795548',
 	[COLOR_ENUM.BLACK]: '#212121'
 });
-
-export const OPACITIES = Object.freeze(['DD', '88', '33']);

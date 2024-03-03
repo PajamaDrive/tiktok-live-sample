@@ -4,7 +4,7 @@
 	// TODO: 選択肢テキストの折り返しを行う
 	import type { Transition } from '@skeletonlabs/skeleton';
 	import { quintInOut } from 'svelte/easing';
-	import { COLORS, COLOR_ENUM, COLOR_NAMES, OPACITIES } from '$lib/color';
+	import { COLORS, COLOR_ENUM, COLOR_NAMES } from '$lib/color';
 	import type { ChoiceInfo, History, RaffleResult } from '../types/roulette';
 	import { getContext } from 'svelte';
 	import type { Writable } from 'svelte/store';
@@ -30,8 +30,7 @@
 	let choiceInfoList: ChoiceInfo[];
 	$: choiceInfoList = choices.map((choice, index) => {
 		const colorIndex = index % COLOR_NAMES.length;
-		const opacityIndex = Math.floor(index / COLOR_NAMES.length);
-		const color = `${COLORS[colorIndex]}${OPACITIES[opacityIndex]}`;
+		const color = COLORS[colorIndex];
 		const start = index / choices.length;
 		const end = (index + 1) / choices.length;
 		return {
@@ -58,9 +57,7 @@
 		choices.length < 2 || isAuto || isDrawing || (isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
 	$: if (choices.length > 1 && isAuto && !isDrawing && isGiftLinked && histories.length > 0) {
-		setTimeout(() => {
-			drawRaffle();
-		}, 1000);
+		setTimeout(drawRaffle, 2000);
 	}
 
 	/**
