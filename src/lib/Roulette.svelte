@@ -56,7 +56,7 @@
 	$: disabled =
 		choices.length < 2 || isAuto || isDrawing || (isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
-	$: if (choices.length > 1 && isAuto && !isDrawing && isGiftLinked && histories.length > 0) {
+	$: if (choices.length > 1 && isAuto && !isDrawing && isGiftLinked) {
 		setTimeout(drawRaffle, 2000);
 	}
 
@@ -64,6 +64,11 @@
 	 * 抽選を実行
 	 */
 	const drawRaffle = () => {
+		// ギフト連動でギフト履歴が0の時は何もしない
+		if (isGiftLinked && histories.length === 0) {
+			return;
+		}
+
 		randomNum = Math.random();
 		isDrawing = true;
 	};
