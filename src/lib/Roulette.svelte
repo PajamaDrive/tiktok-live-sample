@@ -199,7 +199,7 @@
 	};
 </script>
 
-<div class=" flex flex-row justify-center space-x-6">
+<div class=" m-4 flex flex-row space-x-6">
 	<!-- ルーレット -->
 	{#key isDrawing}
 		<div class="flex flex-col items-center justify-center" style="--degree: {degree}deg">
