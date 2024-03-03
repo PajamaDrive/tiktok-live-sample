@@ -64,9 +64,12 @@
 					<div>接続状況</div>
 					<div class="col-span-3">
 						<div class="">
-							{#if roomId}
+							{#if connected}
 								<p class="grod col-span-6 font-mono">
-									<span class="variant-soft-success badge font-bold">接続中</span> (Room ID: {roomId})
+									<span class="variant-soft-success badge font-bold">接続中</span>
+									{#if roomId}
+										(Room ID: {roomId})
+									{/if}
 								</p>
 							{:else}
 								<p class="grod col-span-6 font-mono">
