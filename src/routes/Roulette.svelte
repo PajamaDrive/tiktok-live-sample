@@ -1,27 +1,34 @@
 <script lang="ts">
-	// TODO: 色のマッピングを削除されても崩さないようにする
 	// TODO: 色を更新するようにする
 	// TODO: 選択肢テキストの折り返しを行う
 	import type { Transition } from '@skeletonlabs/skeleton';
 	import { quintInOut } from 'svelte/easing';
-	import { COLORS, COLOR_ENUM, COLOR_NAMES } from '$lib/color';
+	import { COLORS, COLOR_ENUM, type COLOR } from '$lib/color';
 	import type { ChoiceInfo, History, RaffleResult } from '../types/roulette';
 	import Close from 'svelte-material-icons/Close.svelte';
 	import { getTiktokLiveStore } from '../stores/tiktokLive';
+	import { getColorQueueStore } from '../stores/color';
 
 	export let choices: string[];
 	export let histories: History[];
 	let choice: string;
 	const tiktokLiveStore = getTiktokLiveStore();
+	const colorQueueStore = getColorQueueStore();
 
 	const VIEW_BOX_SIDE_LENGTH = 400;
 	const CIRCLE_CENTER = VIEW_BOX_SIDE_LENGTH / 2.0;
 	const RADIUS = VIEW_BOX_SIDE_LENGTH / 2 - 5;
 
+	let colorList: COLOR[] = [];
+	$: if (choices.length > choiceNum) {
+		colorList = [...colorList, $colorQueueStore[0]];
+		colorQueueStore.repush();
+		choiceNum = choices.length;
+	}
 	let choiceInfoList: ChoiceInfo[];
+	let choiceNum = 0;
 	$: choiceInfoList = choices.map((choice, index) => {
-		const colorIndex = index % COLOR_NAMES.length;
-		const color = COLORS[colorIndex];
+		const color = COLORS[COLOR_ENUM[colorList[index]]];
 		const start = index / choices.length;
 		const end = (index + 1) / choices.length;
 		return {
@@ -200,6 +207,9 @@
 	 */
 	const removeChoice = (index: number) => () => {
 		choices = choices.filter((_, _index) => _index !== index);
+		colorQueueStore.interruptAtFirst(colorList[index]);
+		colorList = colorList.filter((_, _index) => _index !== index);
+		choiceNum = choices.length;
 	};
 </script>
 

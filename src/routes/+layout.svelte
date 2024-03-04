@@ -10,12 +10,14 @@
 	} from '@skeletonlabs/skeleton';
 	import Menu from 'svelte-material-icons/Menu.svelte';
 	import { initTikTokLiveStore } from '../stores/tiktokLive';
+	import { initColorQueueStore } from '../stores/color';
 
 	// Drawer利用のための初期化処理
 	initializeStores();
 	const drawerStore = getDrawerStore();
 	// storeの初期化
 	initTikTokLiveStore();
+	initColorQueueStore();
 
 	/**
 	 * Drawerを開く

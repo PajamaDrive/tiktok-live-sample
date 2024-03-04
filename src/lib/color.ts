@@ -15,7 +15,7 @@ export const COLOR_NAMES = [
 	'BROWN',
 	'BLACK'
 ] as const;
-type COLOR = (typeof COLOR_NAMES)[number];
+export type COLOR = (typeof COLOR_NAMES)[number];
 
 export const COLOR_ENUM = Object.freeze<{ [key in COLOR]: number }>({
 	RED: 0,
