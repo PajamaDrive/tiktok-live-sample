@@ -6,22 +6,13 @@
 	import { quintInOut } from 'svelte/easing';
 	import { COLORS, COLOR_ENUM, COLOR_NAMES } from '$lib/color';
 	import type { ChoiceInfo, History, RaffleResult } from '../types/roulette';
-	import { getContext } from 'svelte';
-	import type { Writable } from 'svelte/store';
-	import type { UserInputContext } from '../types/context';
 	import Close from 'svelte-material-icons/Close.svelte';
+	import { getTiktokLiveStore } from '../stores/tiktokLive';
 
 	export let choices: string[];
 	export let histories: History[];
 	let choice: string;
-	let isAuto: boolean;
-	let isGiftLinked: boolean;
-	// Drawで変更した値を受け取る（中身はwritable store）
-	const userSettings = getContext<Writable<UserInputContext>>('userSettings');
-	$: {
-		isAuto = $userSettings.isAuto;
-		isGiftLinked = $userSettings.isGiftLinked;
-	}
+	const tiktokLiveStore = getTiktokLiveStore();
 
 	const VIEW_BOX_SIDE_LENGTH = 400;
 	const CIRCLE_CENTER = VIEW_BOX_SIDE_LENGTH / 2.0;
@@ -54,9 +45,17 @@
 	}
 	// 手動抽選を禁止する条件
 	$: disabled =
-		choices.length < 2 || isAuto || isDrawing || (isGiftLinked && histories.length === 0);
+		choices.length < 2 ||
+		$tiktokLiveStore.isAuto ||
+		isDrawing ||
+		($tiktokLiveStore.isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
-	$: if (choices.length > 1 && isAuto && !isDrawing && isGiftLinked) {
+	$: if (
+		choices.length > 1 &&
+		$tiktokLiveStore.isAuto &&
+		!isDrawing &&
+		$tiktokLiveStore.isGiftLinked
+	) {
 		setTimeout(drawRaffle, 2000);
 	}
 
@@ -65,7 +64,7 @@
 	 */
 	const drawRaffle = () => {
 		// ギフト連動でギフト履歴が0の時は何もしない
-		if (isGiftLinked && histories.length === 0) {
+		if ($tiktokLiveStore.isGiftLinked && histories.length === 0) {
 			return;
 		}
 
@@ -100,7 +99,7 @@
 		if (raffleResult) {
 			raffleResults = getUpdatedRaffleResults(raffleResults, raffleResult);
 		}
-		if (isGiftLinked) {
+		if ($tiktokLiveStore.isGiftLinked) {
 			histories = histories.slice(1, histories.length);
 		}
 	};
@@ -208,7 +207,7 @@
 	<!-- ルーレット -->
 	{#key isDrawing}
 		<div class="flex flex-col items-center justify-center" style="--degree: {degree}deg">
-			{#if isGiftLinked}
+			{#if $tiktokLiveStore.isGiftLinked}
 				<div class="my-1" class:text-red-500={!histories.length}>
 					残り抽選回数: {histories.length}回
 				</div>
@@ -222,7 +221,7 @@
 					<span class="flex items-center text-3xl font-bold">{raffleResult.title}</span>
 				{:else if isDrawing}
 					<div class="text-3xl">抽選中…</div>
-				{:else if isGiftLinked && !histories.length}
+				{:else if $tiktokLiveStore.isGiftLinked && !histories.length}
 					<div class="text-2xl">ギフトが投げられるまでお待ちください</div>
 				{:else}
 					<div class="text-2xl">ルーレットをクリックしてください</div>

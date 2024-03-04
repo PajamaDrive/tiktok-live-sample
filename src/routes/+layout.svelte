@@ -1,6 +1,5 @@
 <script lang="ts">
-	import LiveConnectInput from '$lib/LiveConnectInput.svelte';
-	import { setContext } from 'svelte';
+	import LiveConnectInput from './LiveConnectInput.svelte';
 	import '../app.pcss';
 	import {
 		AppBar,
@@ -10,20 +9,13 @@
 		type DrawerSettings
 	} from '@skeletonlabs/skeleton';
 	import Menu from 'svelte-material-icons/Menu.svelte';
-	import { writable } from 'svelte/store';
+	import { initTikTokLiveStore } from '../stores/tiktokLive';
 
 	// Drawer利用のための初期化処理
 	initializeStores();
 	const drawerStore = getDrawerStore();
-	let isAuto = false;
-	let isGiftLinked = false;
-	// ページに各種値を反映するためにwriteable storeとcontextを使用
-	const userSettings = writable({
-		isAuto,
-		isGiftLinked
-	});
-	setContext('userSettings', userSettings);
-	$: userSettings.set({ isAuto, isGiftLinked });
+	// storeの初期化
+	initTikTokLiveStore();
 
 	/**
 	 * Drawerを開く
@@ -41,7 +33,7 @@
 </script>
 
 <Drawer>
-	<LiveConnectInput bind:isAuto bind:isGiftLinked />
+	<LiveConnectInput />
 </Drawer>
 
 <AppBar>
