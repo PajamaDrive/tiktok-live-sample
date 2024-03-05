@@ -44,6 +44,10 @@
 	let raffleResults: RaffleResult[] = [];
 	let degree = 0;
 	let result = 0;
+	let isError = false;
+	$: if (choice) {
+		isError = false;
+	}
 	$: result = (result + randomNum) % 1;
 	// 選択肢が変わった場合に発火させたいので常に真となる条件を指定
 	$: if (choices) {
@@ -116,7 +120,9 @@
 	 */
 	const spin: Transition = (_node, _param) => {
 		// isDrawingの値が変わるたび呼ばれるがtrueの時（抽選開始直後）だけ処理を行う
-		if (!isDrawing) return {};
+		if (!isDrawing) {
+			return {};
+		}
 		return {
 			duration: 7000,
 			easing: quintInOut,
@@ -195,8 +201,12 @@
 			event.keyCode !== 229 &&
 			event.key === 'Enter'
 		) {
-			choices = [...choices, choice];
-			choice = '';
+			if (!choices.includes(choice)) {
+				choices = [...choices, choice];
+				choice = '';
+			} else {
+				isError = true;
+			}
 		}
 	};
 
@@ -223,7 +233,9 @@
 				</div>
 			{/if}
 			<div class="flex flex-row">
-				{#if !isDrawing && raffleResult}
+				{#if choiceNum < 2}
+					<div class="text-2xl">選択肢を2つ以上入力してください</div>
+				{:else if !isDrawing && raffleResult}
 					<div class="text-3xl">抽選結果:</div>
 					<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
 						<circle cx="20" cy="20" r="10" fill={raffleResult.color} />
@@ -268,14 +280,6 @@
 							stroke="#FAFAFA"
 							stroke-width="2"
 						/>
-						<text
-							x={CIRCLE_CENTER - 150}
-							y={CIRCLE_CENTER + 5}
-							font-size={20}
-							fill={COLORS[COLOR_ENUM.RED]}
-						>
-							選択肢を2つ以上入力してください
-						</text>
 					{/if}
 				</svg>
 			</button>
@@ -288,13 +292,16 @@
 		</div>
 		<div class="mb-2">
 			<input
-				class="input"
+				class="input {isError ? 'border-red-500 focus:border-red-500' : ''}"
 				disabled={isDrawing}
 				type="text"
 				bind:value={choice}
 				on:keydown={onPressedEnter}
 			/>
 		</div>
+		{#if isError}
+			<div class="text-red-500">すでに入力された値です</div>
+		{/if}
 		{#each choiceInfoList as choiceInfo, index}
 			<div>
 				<div
