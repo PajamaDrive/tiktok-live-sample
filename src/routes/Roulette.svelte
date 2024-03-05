@@ -10,11 +10,11 @@
 
 	export let choices: string[];
 	export let histories: History[];
-	let choice: string;
+	let choice = '';
 	const tiktokLiveStore = getTiktokLiveStore();
 	const colorQueueStore = getColorQueueStore();
 
-	const VIEW_BOX_SIDE_LENGTH = 400;
+	const VIEW_BOX_SIDE_LENGTH = 500;
 	const CIRCLE_CENTER = VIEW_BOX_SIDE_LENGTH / 2.0;
 	const RADIUS = VIEW_BOX_SIDE_LENGTH / 2 - 5;
 
@@ -43,6 +43,7 @@
 	let raffleResults: RaffleResult[] = [];
 	let degree = 0;
 	let result = 0;
+	let errorMessage = '';
 	let isError = false;
 	$: if (choice) {
 		isError = false;
@@ -200,11 +201,12 @@
 			event.keyCode !== 229 &&
 			event.key === 'Enter'
 		) {
-			if (!choices.includes(choice)) {
+			if (choice !== '' && !choices.includes(choice)) {
 				choices = [...choices, choice];
 				choice = '';
 			} else {
 				isError = true;
+				errorMessage = choice === '' ? '値を入力してください' : 'すでに入力された値です';
 			}
 		}
 	};
@@ -299,7 +301,7 @@
 			/>
 		</div>
 		{#if isError}
-			<div class="text-red-500">すでに入力された値です</div>
+			<div class="text-red-500">{errorMessage}</div>
 		{/if}
 		{#each choiceInfoList as choiceInfo, index}
 			<div>
