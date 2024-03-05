@@ -1,5 +1,4 @@
 <script lang="ts">
-	// TODO: 色を更新するようにする
 	// TODO: 選択肢テキストの折り返しを行う
 	import type { Transition } from '@skeletonlabs/skeleton';
 	import { quintInOut } from 'svelte/easing';
@@ -182,7 +181,7 @@
 		if (raffleResultIndex >= 0) {
 			return raffleResults.map((raffleResult, index) =>
 				index === raffleResultIndex
-					? { ...raffleResult, count: raffleResult.count + 1 }
+					? { ...raffleResult, count: raffleResult.count + 1, color: choice.color }
 					: raffleResult
 			);
 		}
