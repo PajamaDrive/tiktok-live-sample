@@ -44,6 +44,7 @@
 	let degree = 0;
 	let result = 0;
 	let errorMessage = '';
+	let timeoutId: NodeJS.Timeout | null = null;
 	let isError = false;
 	$: if (choice) {
 		isError = false;
@@ -62,13 +63,18 @@
 		($tiktokLiveStore.isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
 	$: if (
-		choices.length < 2 &&
+		choices.length > 1 &&
 		histories.length &&
 		$tiktokLiveStore.isAuto &&
 		!isDrawing &&
 		$tiktokLiveStore.isGiftLinked
 	) {
-		setTimeout(drawRaffle, 2000);
+		if (!timeoutId) {
+			timeoutId = setTimeout(() => {
+				drawRaffle();
+				timeoutId = null;
+			}, 2000);
+		}
 	}
 
 	/**
