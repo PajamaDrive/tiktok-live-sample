@@ -62,7 +62,7 @@
 		($tiktokLiveStore.isGiftLinked && histories.length === 0);
 	// 条件を満たす場合は1秒後に自動抽選
 	$: if (
-		choices.length > 1 &&
+		histories.length > 1 &&
 		$tiktokLiveStore.isAuto &&
 		!isDrawing &&
 		$tiktokLiveStore.isGiftLinked
